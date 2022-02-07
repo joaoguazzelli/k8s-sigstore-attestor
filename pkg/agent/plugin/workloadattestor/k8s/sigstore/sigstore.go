@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -30,12 +31,17 @@ type Sigstore interface {
 	ShouldSkipImage(status corev1.ContainerStatus) (bool, error)
 	AddSkippedImage(imageID string)
 	ClearSkipList()
+	AddAllowedSubject(subject string)
+	EnableAllowSubjectList(bool)
+	ClearAllowedSubjects()
 }
 
 type Sigstoreimpl struct {
 	verifyFunction             func(context context.Context, ref name.Reference, co *cosign.CheckOpts) ([]oci.Signature, bool, error)
 	fetchImageManifestFunction func(ref name.Reference, options ...remote.Option) (*remote.Descriptor, error)
 	skippedImages              map[string]bool
+	allowListEnabled           bool
+	subjectAllowList           map[string]bool
 }
 
 func New() Sigstore {
@@ -43,6 +49,8 @@ func New() Sigstore {
 		verifyFunction:             cosign.VerifyImageSignatures,
 		fetchImageManifestFunction: remote.Get,
 		skippedImages:              nil,
+		allowListEnabled:           false,
+		subjectAllowList:           nil,
 	}
 }
 
@@ -147,17 +155,81 @@ func getSignatureSubject(signature oci.Signature) string {
 	return subject
 }
 
+// The following structs are used to go through the payload json objects
+type BundleSignature struct {
+	Content   string            `json:"content"`
+	Format    string            `json:"format"`
+	PublicKey map[string]string `json:"publicKey"`
+}
+
+type BundleSpec struct {
+	Data      map[string]map[string]string `json:"data"`
+	Signature BundleSignature              `json:"signature"`
+}
+
+type BundleBody struct {
+	APIVersion string     `json:"apiVersion"`
+	Kind       string     `json:"kind"`
+	Spec       BundleSpec `json:"spec"`
+}
+
+func getBundleSignatureContent(bundle *oci.Bundle) (string, error) {
+	if bundle == nil {
+		return "", errors.New("Bundle is nil")
+	}
+	body64, ok := bundle.Payload.Body.(string)
+	if !ok {
+		return "", errors.New("Payload body is not a string")
+	}
+	body, err := base64.StdEncoding.DecodeString(body64)
+	if err != nil {
+		return "", err
+	}
+	var bundlebody BundleBody
+	err = json.Unmarshal(body, &bundlebody)
+
+	if err != nil {
+		return "", err
+	}
+
+	if bundlebody.Spec.Signature.Content == "" {
+		return "", errors.New("Bundle payload body has no signature content")
+	}
+
+	return bundlebody.Spec.Signature.Content, nil
+}
+
 // SelectorValuesFromSignature extracts selectors from a signature.
 // returns a list of selectors.
 func (sigstore *Sigstoreimpl) SelectorValuesFromSignature(signature oci.Signature) []string {
 	subject := getSignatureSubject(signature)
 
-	if subject != "" {
-		return []string{
-			fmt.Sprintf("image-signature-subject:%s", subject),
+	if subject == "" {
+		return nil
+	}
+
+	suppress := false
+	if sigstore.allowListEnabled {
+		if _, ok := sigstore.subjectAllowList[subject]; !ok {
+			suppress = true
 		}
 	}
-	return nil
+
+	var selectors []string
+	if !suppress {
+		selectors = []string{
+			fmt.Sprintf("image-signature-subject:%s", subject),
+		}
+		bundle, _ := signature.Bundle()
+		sigContent, err := getBundleSignatureContent(bundle)
+		if err != nil {
+			log.Println("Error getting signature content: ", err.Error())
+		} else {
+			selectors = append(selectors, fmt.Sprintf("image-signature-content:%s", sigContent))
+		}
+	}
+
+	return selectors
 }
 
 func certSubject(c *x509.Certificate) string {
@@ -231,4 +303,22 @@ func validateRefDigest(ref name.Reference, digest string) (bool, error) {
 		return false, fmt.Errorf("Digest %s does not match %s", digest, dgst.DigestStr())
 	}
 	return false, fmt.Errorf("Reference %s is not a digest", ref.String())
+}
+
+func (sigstore *Sigstoreimpl) AddAllowedSubject(subject string) {
+	if sigstore.subjectAllowList == nil {
+		sigstore.subjectAllowList = make(map[string]bool)
+	}
+	sigstore.subjectAllowList[subject] = true
+}
+
+func (sigstore *Sigstoreimpl) ClearAllowedSubjects() {
+	for k := range sigstore.subjectAllowList {
+		delete(sigstore.subjectAllowList, k)
+	}
+	sigstore.subjectAllowList = nil
+}
+
+func (sigstore *Sigstoreimpl) EnableAllowSubjectList(flag bool) {
+	sigstore.allowListEnabled = flag
 }

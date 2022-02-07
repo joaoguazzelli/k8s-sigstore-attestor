@@ -22,6 +22,7 @@ type signature struct {
 
 	payload []byte
 	cert    *x509.Certificate
+	bundle  *oci.Bundle
 }
 
 func (signature) Annotations() (map[string]string, error) {
@@ -44,8 +45,8 @@ func (signature) Chain() ([]*x509.Certificate, error) {
 	return nil, nil
 }
 
-func (signature) Bundle() (*oci.Bundle, error) {
-	return nil, nil
+func (s signature) Bundle() (*oci.Bundle, error) {
+	return s.bundle, nil
 }
 
 func TestNew(t *testing.T) {
@@ -92,7 +93,7 @@ func TestSigstoreimpl_FetchImageSignatures(t *testing.T) {
 				verifyFunction: func(context context.Context, ref name.Reference, co *cosign.CheckOpts) ([]oci.Signature, bool, error) {
 					return []oci.Signature{
 						signature{
-							payload: []byte(`{"critical": {"identity": {"docker-reference": "docker-registry.com/some/image"},"image": {"docker-manifest-digest": "02c15a8d1735c65bb8ca86c716615d3c0d8beb87dc68ed88bb49192f90b184e2"},"type": "some type"},"optional": {"subject": "spirex@hpe.com","key2": "value 2","key3": "value 3"}}`),
+							payload: []byte(`{"critical": {"identity": {"docker-reference": "docker-registry.com/some/image"},"image": {"docker-manifest-digest": "02c15a8d1735c65bb8ca86c716615d3c0d8beb87dc68ed88bb49192f90b184e2"},"type": "some type"},"optional": {"subject": "spirex@example.com","key2": "value 2","key3": "value 3"}}`),
 						},
 					}, true, nil
 				},
@@ -108,7 +109,7 @@ func TestSigstoreimpl_FetchImageSignatures(t *testing.T) {
 			},
 			want: []oci.Signature{
 				signature{
-					payload: []byte(`{"critical": {"identity": {"docker-reference": "docker-registry.com/some/image"},"image": {"docker-manifest-digest": "02c15a8d1735c65bb8ca86c716615d3c0d8beb87dc68ed88bb49192f90b184e2"},"type": "some type"},"optional": {"subject": "spirex@hpe.com","key2": "value 2","key3": "value 3"}}`),
+					payload: []byte(`{"critical": {"identity": {"docker-reference": "docker-registry.com/some/image"},"image": {"docker-manifest-digest": "02c15a8d1735c65bb8ca86c716615d3c0d8beb87dc68ed88bb49192f90b184e2"},"type": "some type"},"optional": {"subject": "spirex@example.com","key2": "value 2","key3": "value 3"}}`),
 				},
 			},
 			wantErr: false,
@@ -119,10 +120,10 @@ func TestSigstoreimpl_FetchImageSignatures(t *testing.T) {
 				verifyFunction: func(context context.Context, ref name.Reference, co *cosign.CheckOpts) ([]oci.Signature, bool, error) {
 					return []oci.Signature{
 						signature{
-							payload: []byte(`{"critical": {"identity": {"docker-reference": "docker-registry.com/some/image"},"image": {"docker-manifest-digest": "5fb2054478353fd8d514056d1745b3a9eef066deadda4b90967af7ca65ce6505"},"type": "some type"},"optional": {"subject": "spirex@hpe.com","key2": "value 2","key3": "value 3"}}`),
+							payload: []byte(`{"critical": {"identity": {"docker-reference": "docker-registry.com/some/image"},"image": {"docker-manifest-digest": "5fb2054478353fd8d514056d1745b3a9eef066deadda4b90967af7ca65ce6505"},"type": "some type"},"optional": {"subject": "spirex@example.com","key2": "value 2","key3": "value 3"}}`),
 						},
 						signature{
-							payload: []byte(`{"critical": {"identity": {"docker-reference": "docker-registry.com/some/image"},"image": {"docker-manifest-digest": "some digest"},"type": "some type"},"optional": {"subject": "spirex@hpe.com","key2": "value 4","key3": "value 5"}}`),
+							payload: []byte(`{"critical": {"identity": {"docker-reference": "docker-registry.com/some/image"},"image": {"docker-manifest-digest": "some digest"},"type": "some type"},"optional": {"subject": "spirex@example.com","key2": "value 4","key3": "value 5"}}`),
 						},
 					}, true, nil
 				},
@@ -138,10 +139,10 @@ func TestSigstoreimpl_FetchImageSignatures(t *testing.T) {
 			},
 			want: []oci.Signature{
 				signature{
-					payload: []byte(`{"critical": {"identity": {"docker-reference": "docker-registry.com/some/image"},"image": {"docker-manifest-digest": "5fb2054478353fd8d514056d1745b3a9eef066deadda4b90967af7ca65ce6505"},"type": "some type"},"optional": {"subject": "spirex@hpe.com","key2": "value 2","key3": "value 3"}}`),
+					payload: []byte(`{"critical": {"identity": {"docker-reference": "docker-registry.com/some/image"},"image": {"docker-manifest-digest": "5fb2054478353fd8d514056d1745b3a9eef066deadda4b90967af7ca65ce6505"},"type": "some type"},"optional": {"subject": "spirex@example.com","key2": "value 2","key3": "value 3"}}`),
 				},
 				signature{
-					payload: []byte(`{"critical": {"identity": {"docker-reference": "docker-registry.com/some/image"},"image": {"docker-manifest-digest": "some digest"},"type": "some type"},"optional": {"subject": "spirex@hpe.com","key2": "value 4","key3": "value 5"}}`),
+					payload: []byte(`{"critical": {"identity": {"docker-reference": "docker-registry.com/some/image"},"image": {"docker-manifest-digest": "some digest"},"type": "some type"},"optional": {"subject": "spirex@example.com","key2": "value 4","key3": "value 5"}}`),
 				},
 			},
 			wantErr: false,
@@ -241,7 +242,7 @@ func TestSigstoreimpl_FetchImageSignatures(t *testing.T) {
 				verifyFunction: func(context context.Context, ref name.Reference, co *cosign.CheckOpts) ([]oci.Signature, bool, error) {
 					return []oci.Signature{
 						signature{
-							payload: []byte(`{"critical": {"identity": {"docker-reference": "docker-registry.com/some/image"},"image": {"docker-manifest-digest": "02c15a8d1735c65bb8ca86c716615d3c0d8beb87dc68ed88bb49192f90b184e2"},"type": "some type"},"optional": {"subject": "spirex@hpe.com","key2": "value 2","key3": "value 3"}}`),
+							payload: []byte(`{"critical": {"identity": {"docker-reference": "docker-registry.com/some/image"},"image": {"docker-manifest-digest": "02c15a8d1735c65bb8ca86c716615d3c0d8beb87dc68ed88bb49192f90b184e2"},"type": "some type"},"optional": {"subject": "spirex@example.com","key2": "value 2","key3": "value 3"}}`),
 						},
 					}, true, errors.New("some error")
 				},
@@ -263,7 +264,7 @@ func TestSigstoreimpl_FetchImageSignatures(t *testing.T) {
 			fields: fields{
 				verifyFunction: func(context context.Context, ref name.Reference, co *cosign.CheckOpts) ([]oci.Signature, bool, error) {
 					return []oci.Signature{signature{
-						payload: []byte(`{"critical": {"identity": {"docker-reference": "docker-registry.com/some/image"},"image": {"docker-manifest-digest": "02c15a8d1735c65bb8ca86c716615d3c0d8beb87dc68ed88bb49192f90b184e2"},"type": "some type"},"optional": {"subject": "spirex@hpe.com","key2": "value 2","key3": "value 3"}}`),
+						payload: []byte(`{"critical": {"identity": {"docker-reference": "docker-registry.com/some/image"},"image": {"docker-manifest-digest": "02c15a8d1735c65bb8ca86c716615d3c0d8beb87dc68ed88bb49192f90b184e2"},"type": "some type"},"optional": {"subject": "spirex@example.com","key2": "value 2","key3": "value 3"}}`),
 					}}, false, nil
 				},
 				fetchImageManifestFunction: func(ref name.Reference, options ...remote.Option) (*remote.Descriptor, error) {
@@ -298,7 +299,7 @@ func TestSigstoreimpl_FetchImageSignatures(t *testing.T) {
 				verifyFunction: func(context context.Context, ref name.Reference, co *cosign.CheckOpts) ([]oci.Signature, bool, error) {
 					return []oci.Signature{
 						signature{
-							payload: []byte(`{"critical": {"identity": {"docker-reference": "docker-registry.com/some/image"},"image": {"docker-manifest-digest": "02c15a8d1735c65bb8ca86c716615d3c0d8beb87dc68ed88bb49192f90b184e2"},"type": "some type"},"optional": {"subject": "spirex@hpe.com","key2": "value 2","key3": "value 3"}}`),
+							payload: []byte(`{"critical": {"identity": {"docker-reference": "docker-registry.com/some/image"},"image": {"docker-manifest-digest": "02c15a8d1735c65bb8ca86c716615d3c0d8beb87dc68ed88bb49192f90b184e2"},"type": "some type"},"optional": {"subject": "spirex@example.com","key2": "value 2","key3": "value 3"}}`),
 						},
 					}, true, nil
 				},
@@ -314,7 +315,7 @@ func TestSigstoreimpl_FetchImageSignatures(t *testing.T) {
 			},
 			want: []oci.Signature{
 				signature{
-					payload: []byte(`{"critical": {"identity": {"docker-reference": "docker-registry.com/some/image"},"image": {"docker-manifest-digest": "02c15a8d1735c65bb8ca86c716615d3c0d8beb87dc68ed88bb49192f90b184e2"},"type": "some type"},"optional": {"subject": "spirex@hpe.com","key2": "value 2","key3": "value 3"}}`),
+					payload: []byte(`{"critical": {"identity": {"docker-reference": "docker-registry.com/some/image"},"image": {"docker-manifest-digest": "02c15a8d1735c65bb8ca86c716615d3c0d8beb87dc68ed88bb49192f90b184e2"},"type": "some type"},"optional": {"subject": "spirex@example.com","key2": "value 2","key3": "value 3"}}`),
 				},
 			},
 			wantErr: false,
@@ -376,11 +377,16 @@ func TestSigstoreimpl_ExtractSelectorsFromSignatures(t *testing.T) {
 			args: args{
 				signatures: []oci.Signature{
 					signature{
-						payload: []byte(`{"critical": {"identity": {"docker-reference": "docker-registry.com/some/image"},"image": {"docker-manifest-digest": "some digest"},"type": "some type"},"optional": {"subject": "spirex@hpe.com","key2": "value 2","key3": "value 3"}}`),
+						payload: []byte(`{"critical": {"identity": {"docker-reference": "docker-registry.com/some/image"},"image": {"docker-manifest-digest": "some digest"},"type": "some type"},"optional": {"subject": "spirex@example.com"}}`),
+						bundle: &oci.Bundle{
+							Payload: oci.BundlePayload{
+								Body: "ewogICJzcGVjIjogewogICAgInNpZ25hdHVyZSI6IHsKICAgICAgImNvbnRlbnQiOiAiTUVVQ0lRQ3llbThHY3Iwc1BGTVA3ZlRYYXpDTjU3TmNONStNanhKdzlPbzB4MmVNK0FJZ2RnQlA5NkJPMVRlL05kYmpIYlVlYjBCVXllNmRlUmdWdFFFdjVObzVzbUE9IgogICAgfQogIH0KfQ==",
+							},
+						},
 					},
 				},
 			},
-			want: []string{"image-signature-subject:spirex@hpe.com"},
+			want: []string{"image-signature-subject:spirex@example.com", "image-signature-content:MEUCIQCyem8Gcr0sPFMP7fTXazCN57NcN5+MjxJw9Oo0x2eM+AIgdgBP96BO1Te/NdbjHbUeb0BUye6deRgVtQEv5No5smA="},
 		},
 		{
 			name: "extract selector from image signature array with multiple entries",
@@ -390,14 +396,24 @@ func TestSigstoreimpl_ExtractSelectorsFromSignatures(t *testing.T) {
 			args: args{
 				signatures: []oci.Signature{
 					signature{
-						payload: []byte(`{"critical": {"identity": {"docker-reference": "docker-registry.com/some/image"},"image": {"docker-manifest-digest": "some digest"},"type": "some type"},"optional": {"subject": "spirex1@hpe.com","key2": "value 2","key3": "value 3"}}`),
+						payload: []byte(`{"critical": {"identity": {"docker-reference": "docker-registry.com/some/image"},"image": {"docker-manifest-digest": "some digest"},"type": "some type"},"optional": {"subject": "spirex1@example.com","key2": "value 2","key3": "value 3"}}`),
+						bundle: &oci.Bundle{
+							Payload: oci.BundlePayload{
+								Body: "ewogICJzcGVjIjogewogICAgInNpZ25hdHVyZSI6IHsKICAgICAgImNvbnRlbnQiOiAiTUVVQ0lRQ3llbThHY3Iwc1BGTVA3ZlRYYXpDTjU3TmNONStNanhKdzlPbzB4MmVNK0FJZ2RnQlA5NkJPMVRlL05kYmpIYlVlYjBCVXllNmRlUmdWdFFFdjVObzVzbUE9IgogICAgfQogIH0KfQ==",
+							},
+						},
 					},
 					signature{
-						payload: []byte(`{"critical": {"identity": {"docker-reference": "docker-registry.com/some/image"},"image": {"docker-manifest-digest": "some digest"},"type": "some type"},"optional": {"subject": "spirex2@hpe.com","key2": "value 2","key3": "value 3"}}`),
+						payload: []byte(`{"critical": {"identity": {"docker-reference": "docker-registry.com/some/image"},"image": {"docker-manifest-digest": "some digest"},"type": "some type"},"optional": {"subject": "spirex2@example.com","key2": "value 2","key3": "value 3"}}`),
+						bundle: &oci.Bundle{
+							Payload: oci.BundlePayload{
+								Body: "ewogICJzcGVjIjogewogICAgInNpZ25hdHVyZSI6IHsKICAgICAgImNvbnRlbnQiOiAiTUVVQ0lRQ3llbThHY3Iwc1BGTVA3ZlRYYXpDTjU3TmNONStNanhKdzlPbzB4MmVNK0FJZ2RnQlA5NkJPMVRlL05kYmpIYlVlYjBCVXllNmRlUmdWdFFFdjVObzVzbUI9IgogICAgfQogIH0KfQo=",
+							},
+						},
 					},
 				},
 			},
-			want: []string{"image-signature-subject:spirex1@hpe.com", "image-signature-subject:spirex2@hpe.com"},
+			want: []string{"image-signature-subject:spirex1@example.com", "image-signature-content:MEUCIQCyem8Gcr0sPFMP7fTXazCN57NcN5+MjxJw9Oo0x2eM+AIgdgBP96BO1Te/NdbjHbUeb0BUye6deRgVtQEv5No5smA=", "image-signature-subject:spirex2@example.com", "image-signature-content:MEUCIQCyem8Gcr0sPFMP7fTXazCN57NcN5+MjxJw9Oo0x2eM+AIgdgBP96BO1Te/NdbjHbUeb0BUye6deRgVtQEv5No5smB="},
 		},
 		{
 			name: "with invalid payload",
@@ -424,14 +440,19 @@ func TestSigstoreimpl_ExtractSelectorsFromSignatures(t *testing.T) {
 						payload: []byte(`{"critical": {"identity": {"docker-reference": "some reference"},"image": {"docker-manifest-digest": "some digest"},"type": "some type"}}`),
 						cert: &x509.Certificate{
 							EmailAddresses: []string{
-								"spirex@hpe.com",
-								"hpe@hpe.com",
+								"spirex@example.com",
+								"hpe@example.com",
+							},
+						},
+						bundle: &oci.Bundle{
+							Payload: oci.BundlePayload{
+								Body: "ewogICJzcGVjIjogewogICAgInNpZ25hdHVyZSI6IHsKICAgICAgImNvbnRlbnQiOiAiTUVVQ0lRQ3llbThHY3Iwc1BGTVA3ZlRYYXpDTjU3TmNONStNanhKdzlPbzB4MmVNK0FJZ2RnQlA5NkJPMVRlL05kYmpIYlVlYjBCVXllNmRlUmdWdFFFdjVObzVzbUE9IgogICAgfQogIH0KfQ==",
 							},
 						},
 					},
 				},
 			},
-			want: []string{"image-signature-subject:spirex@hpe.com"},
+			want: []string{"image-signature-subject:spirex@example.com", "image-signature-content:MEUCIQCyem8Gcr0sPFMP7fTXazCN57NcN5+MjxJw9Oo0x2eM+AIgdgBP96BO1Te/NdbjHbUeb0BUye6deRgVtQEv5No5smA="},
 		},
 		{
 			name: "extract selector from image signature with URI certificate",
@@ -446,7 +467,7 @@ func TestSigstoreimpl_ExtractSelectorsFromSignatures(t *testing.T) {
 							URIs: []*url.URL{
 								{
 									Scheme: "https",
-									Host:   "www.hpe.com",
+									Host:   "www.example.com",
 									Path:   "somepath1",
 								},
 								{
@@ -456,10 +477,15 @@ func TestSigstoreimpl_ExtractSelectorsFromSignatures(t *testing.T) {
 								},
 							},
 						},
+						bundle: &oci.Bundle{
+							Payload: oci.BundlePayload{
+								Body: "ewogICJzcGVjIjogewogICAgInNpZ25hdHVyZSI6IHsKICAgICAgImNvbnRlbnQiOiAiTUVVQ0lRQ3llbThHY3Iwc1BGTVA3ZlRYYXpDTjU3TmNONStNanhKdzlPbzB4MmVNK0FJZ2RnQlA5NkJPMVRlL05kYmpIYlVlYjBCVXllNmRlUmdWdFFFdjVObzVzbUE9IgogICAgfQogIH0KfQ==",
+							},
+						},
 					},
 				},
 			},
-			want: []string{"image-signature-subject:https://www.hpe.com/somepath1"},
+			want: []string{"image-signature-subject:https://www.example.com/somepath1", "image-signature-content:MEUCIQCyem8Gcr0sPFMP7fTXazCN57NcN5+MjxJw9Oo0x2eM+AIgdgBP96BO1Te/NdbjHbUeb0BUye6deRgVtQEv5No5smA="},
 		},
 		{
 			name: "extract selector from empty array",
@@ -807,10 +833,10 @@ func Test_getSignatureSubject(t *testing.T) {
 			name: "single image signature",
 			args: args{
 				signature: signature{
-					payload: []byte(`{"critical": {"identity": {"docker-reference": "docker-registry.com/some/image"},"image": {"docker-manifest-digest": "some digest"},"type": "some type"},"optional": {"subject": "spirex@hpe.com","key2": "value 2","key3": "value 3"}}`),
+					payload: []byte(`{"critical": {"identity": {"docker-reference": "docker-registry.com/some/image"},"image": {"docker-manifest-digest": "some digest"},"type": "some type"},"optional": {"subject": "spirex@example.com","key2": "value 2","key3": "value 3"}}`),
 				},
 			},
-			want: "spirex@hpe.com",
+			want: "spirex@example.com",
 		},
 		{
 			name: "empty signature array",
@@ -828,7 +854,7 @@ func Test_getSignatureSubject(t *testing.T) {
 			name: "single image signature, no certs",
 			args: args{
 				signature: &noCertSignature{
-					payload: []byte(`{"critical": {"identity": {"docker-reference": "docker-registry.com/some/image"},"image": {"docker-manifest-digest": "some digest"},"type": "some type"},"optional": {"subject": "spirex@hpe.com","key2": "value 2","key3": "value 3"}}`),
+					payload: []byte(`{"critical": {"identity": {"docker-reference": "docker-registry.com/some/image"},"image": {"docker-manifest-digest": "some digest"},"type": "some type"},"optional": {"subject": "spirex@example.com","key2": "value 2","key3": "value 3"}}`),
 				},
 			},
 			want: "",
@@ -837,7 +863,7 @@ func Test_getSignatureSubject(t *testing.T) {
 			name: "single image signature,garbled subject in signature",
 			args: args{
 				signature: &signature{
-					payload: []byte(`{"critical": {"identity": {"docker-reference": "docker-registry.com/some/image"},"image": {"docker-manifest-digest": "some digest"},"type": "some type"},"optional": {"subject": "s\\\\||as\0\0aasdasd/....???/.>wd12<><,,,><{}{pirex@hpe.com","key2": "value 2","key3": "value 3"}}`),
+					payload: []byte(`{"critical": {"identity": {"docker-reference": "docker-registry.com/some/image"},"image": {"docker-manifest-digest": "some digest"},"type": "some type"},"optional": {"subject": "s\\\\||as\0\0aasdasd/....???/.>wd12<><,,,><{}{pirex@example.com","key2": "value 2","key3": "value 3"}}`),
 				},
 			},
 			want: "",
@@ -1063,6 +1089,408 @@ func TestSigstoreimpl_ValidateImage(t *testing.T) {
 			}
 			if got != tt.want {
 				t.Errorf("Sigstoreimpl.ValidateImage() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSigstoreimpl_AddAllowedSubject(t *testing.T) {
+	type fields struct {
+		subjectAllowList map[string]bool
+	}
+	type args struct {
+		subject string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   map[string]bool
+	}{
+		{
+			name: "add allowed subject to nil map",
+			fields: fields{
+				subjectAllowList: nil,
+			},
+			args: args{
+				subject: "spirex@example.com",
+			},
+			want: map[string]bool{
+				"spirex@example.com": true,
+			},
+		},
+		{
+			name: "add allowed subject to empty map",
+			fields: fields{
+				subjectAllowList: map[string]bool{},
+			},
+			args: args{
+				subject: "spirex@example.com",
+			},
+			want: map[string]bool{
+				"spirex@example.com": true,
+			},
+		},
+		{
+			name: "add allowed subject to existing map",
+			fields: fields{
+				subjectAllowList: map[string]bool{
+					"spirex1@example.com": true,
+					"spirex2@example.com": true,
+					"spirex3@example.com": true,
+					"spirex5@example.com": true,
+				},
+			},
+			args: args{
+				subject: "spirex4@example.com",
+			},
+			want: map[string]bool{
+				"spirex1@example.com": true,
+				"spirex2@example.com": true,
+				"spirex3@example.com": true,
+				"spirex4@example.com": true,
+				"spirex5@example.com": true,
+			},
+		},
+		{
+			name: "add existing allowed subject to existing map",
+			fields: fields{
+				subjectAllowList: map[string]bool{
+					"spirex1@example.com": true,
+					"spirex2@example.com": true,
+					"spirex3@example.com": true,
+					"spirex4@example.com": true,
+					"spirex5@example.com": true,
+				},
+			},
+			args: args{
+				subject: "spirex4@example.com",
+			},
+			want: map[string]bool{
+				"spirex1@example.com": true,
+				"spirex2@example.com": true,
+				"spirex3@example.com": true,
+				"spirex4@example.com": true,
+				"spirex5@example.com": true,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sigstore := &Sigstoreimpl{
+				subjectAllowList: tt.fields.subjectAllowList,
+			}
+			sigstore.AddAllowedSubject(tt.args.subject)
+			if !reflect.DeepEqual(sigstore.subjectAllowList, tt.want) {
+				t.Errorf("sigstore.subjectAllowList = %v, want %v", sigstore.subjectAllowList, tt.want)
+			}
+		})
+	}
+}
+
+func TestSigstoreimpl_ClearAllowedSubjects(t *testing.T) {
+	type fields struct {
+		subjectAllowList map[string]bool
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   map[string]bool
+	}{
+
+		{
+			name: "clear existing map",
+			fields: fields{
+				subjectAllowList: map[string]bool{
+					"spirex1@example.com": true,
+					"spirex2@example.com": true,
+					"spirex3@example.com": true,
+					"spirex4@example.com": true,
+					"spirex5@example.com": true,
+				},
+			},
+			want: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sigstore := &Sigstoreimpl{
+				subjectAllowList: tt.fields.subjectAllowList,
+			}
+			sigstore.ClearAllowedSubjects()
+			if !reflect.DeepEqual(sigstore.subjectAllowList, tt.want) {
+				t.Errorf("sigstore.subjectAllowList = %v, want %v", sigstore.subjectAllowList, tt.want)
+			}
+		})
+	}
+}
+
+func TestSigstoreimpl_EnableAllowSubjectList(t *testing.T) {
+	type fields struct {
+		allowListEnabled bool
+	}
+	type args struct {
+		flag bool
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   bool
+	}{
+		{
+			name: "disabling subject allow list",
+			fields: fields{
+				allowListEnabled: true,
+			},
+			args: args{
+				flag: false,
+			},
+			want: false,
+		},
+		{
+			name: "enabling subject allow list",
+			fields: fields{
+				allowListEnabled: false,
+			},
+			args: args{
+				flag: true,
+			},
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sigstore := &Sigstoreimpl{
+				allowListEnabled: tt.fields.allowListEnabled,
+			}
+			sigstore.EnableAllowSubjectList(tt.args.flag)
+			if sigstore.allowListEnabled != tt.want {
+				t.Errorf("sigstore.allowListEnabled = %v, want %v", sigstore.allowListEnabled, tt.want)
+			}
+		})
+	}
+}
+
+func TestSigstoreimpl_SelectorValuesFromSignature(t *testing.T) {
+	type fields struct {
+		allowListEnabled bool
+		subjectAllowList map[string]bool
+	}
+	type args struct {
+		signature oci.Signature
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   []string
+	}{
+		{
+			name: "selector from signature",
+			fields: fields{
+				allowListEnabled: false,
+				subjectAllowList: nil,
+			},
+			args: args{
+				signature: signature{
+					payload: []byte(`{"critical": {"identity": {"docker-reference": "docker-registry.com/some/image"},"image": {"docker-manifest-digest": "02c15a8d1735c65bb8ca86c716615d3c0d8beb87dc68ed88bb49192f90b184e2"},"type": "some type"},"optional": {"subject": "spirex@example.com","key2": "value 2","key3": "value 3"}}`),
+					bundle: &oci.Bundle{
+						Payload: oci.BundlePayload{
+							Body: "ewogICJzcGVjIjogewogICAgInNpZ25hdHVyZSI6IHsKICAgICAgImNvbnRlbnQiOiAiTUVVQ0lRQ3llbThHY3Iwc1BGTVA3ZlRYYXpDTjU3TmNONStNanhKdzlPbzB4MmVNK0FJZ2RnQlA5NkJPMVRlL05kYmpIYlVlYjBCVXllNmRlUmdWdFFFdjVObzVzbUE9IgogICAgfQogIH0KfQ==",
+						},
+					},
+				},
+			},
+			want: []string{"image-signature-subject:spirex@example.com", "image-signature-content:MEUCIQCyem8Gcr0sPFMP7fTXazCN57NcN5+MjxJw9Oo0x2eM+AIgdgBP96BO1Te/NdbjHbUeb0BUye6deRgVtQEv5No5smA="},
+		},
+		{
+			name: "selector from signature, empty subject",
+			fields: fields{
+				allowListEnabled: false,
+				subjectAllowList: nil,
+			},
+			args: args{
+				signature: signature{
+					payload: []byte(`{"critical": {"identity": {"docker-reference": "docker-registry.com/some/image"},"image": {"docker-manifest-digest": "02c15a8d1735c65bb8ca86c716615d3c0d8beb87dc68ed88bb49192f90b184e2"},"type": "some type"},"optional": {"subject": "","key2": "value 2","key3": "value 3"}}`),
+					bundle: &oci.Bundle{
+						Payload: oci.BundlePayload{
+							Body: "ewogICJzcGVjIjogewogICAgInNpZ25hdHVyZSI6IHsKICAgICAgImNvbnRlbnQiOiAiTUVVQ0lRQ3llbThHY3Iwc1BGTVA3ZlRYYXpDTjU3TmNONStNanhKdzlPbzB4MmVNK0FJZ2RnQlA5NkJPMVRlL05kYmpIYlVlYjBCVXllNmRlUmdWdFFFdjVObzVzbUE9IgogICAgfQogIH0KfQ==",
+						},
+					},
+				},
+			},
+			want: nil,
+		},
+		{
+			name: "selector from signature, not in allowlist",
+			fields: fields{
+				allowListEnabled: true,
+				subjectAllowList: map[string]bool{
+					"spirex2@example.com": true,
+				},
+			},
+			args: args{
+				signature: signature{
+					payload: []byte(`{"critical": {"identity": {"docker-reference": "docker-registry.com/some/image"},"image": {"docker-manifest-digest": "02c15a8d1735c65bb8ca86c716615d3c0d8beb87dc68ed88bb49192f90b184e2"},"type": "some type"},"optional": {"subject": "spirex1@example.com","key2": "value 2","key3": "value 3"}}`),
+				},
+			},
+			want: nil,
+		},
+		{
+			name: "selector from signature, allowedlist enabled, in allowlist",
+			fields: fields{
+				allowListEnabled: true,
+				subjectAllowList: map[string]bool{
+					"spirex@example.com": true,
+				},
+			},
+			args: args{
+				signature: signature{
+					payload: []byte(`{"critical": {"identity": {"docker-reference": "docker-registry.com/some/image"},"image": {"docker-manifest-digest": "02c15a8d1735c65bb8ca86c716615d3c0d8beb87dc68ed88bb49192f90b184e2"},"type": "some type"},"optional": {"subject": "spirex@example.com","key2": "value 2","key3": "value 3"}}`),
+					bundle: &oci.Bundle{
+						Payload: oci.BundlePayload{
+							Body: "ewogICJzcGVjIjogewogICAgInNpZ25hdHVyZSI6IHsKICAgICAgImNvbnRlbnQiOiAiTUVVQ0lRQ3llbThHY3Iwc1BGTVA3ZlRYYXpDTjU3TmNONStNanhKdzlPbzB4MmVNK0FJZ2RnQlA5NkJPMVRlL05kYmpIYlVlYjBCVXllNmRlUmdWdFFFdjVObzVzbUE9IgogICAgfQogIH0KfQ==",
+						},
+					},
+				},
+			},
+			want: []string{"image-signature-subject:spirex@example.com", "image-signature-content:MEUCIQCyem8Gcr0sPFMP7fTXazCN57NcN5+MjxJw9Oo0x2eM+AIgdgBP96BO1Te/NdbjHbUeb0BUye6deRgVtQEv5No5smA="},
+		},
+		{
+			name: "selector from signature, allowedlist enabled, in allowlist, empty content",
+			fields: fields{
+				allowListEnabled: true,
+				subjectAllowList: map[string]bool{
+					"spirex@example.com": true,
+				},
+			},
+			args: args{
+				signature: signature{
+					payload: []byte(`{"critical": {"identity": {"docker-reference": "docker-registry.com/some/image"},"image": {"docker-manifest-digest": "02c15a8d1735c65bb8ca86c716615d3c0d8beb87dc68ed88bb49192f90b184e2"},"type": "some type"},"optional": {"subject": "spirex@example.com","key2": "value 2","key3": "value 3"}}`),
+					bundle: &oci.Bundle{
+						Payload: oci.BundlePayload{
+							Body: "ewogICJzcGVjIjogewogICAgInNpZ25hdHVyZSI6IHsKICAgICAgImNvbnRlbnQiOiAiIgogICAgfQogIH0KfQ==",
+						},
+					},
+				},
+			},
+			want: []string{"image-signature-subject:spirex@example.com"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sigstore := &Sigstoreimpl{
+				allowListEnabled: tt.fields.allowListEnabled,
+				subjectAllowList: tt.fields.subjectAllowList,
+			}
+			if got := sigstore.SelectorValuesFromSignature(tt.args.signature); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Sigstoreimpl.SelectorValuesFromSignature() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_getBundleSignatureContent(t *testing.T) {
+	type args struct {
+		bundle *oci.Bundle
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    string
+		wantErr bool
+	}{
+		{
+			name: "nil bundle",
+			args: args{
+				bundle: nil,
+			},
+			want:    "",
+			wantErr: true,
+		},
+		{
+			name: "Bundle payload body is not a string",
+			args: args{
+				bundle: &oci.Bundle{
+					Payload: oci.BundlePayload{
+						Body: 42,
+					},
+				},
+			},
+			want:    "",
+			wantErr: true,
+		},
+		{
+			name: "Bundle payload body is not valid base64",
+			args: args{
+				bundle: &oci.Bundle{
+					Payload: oci.BundlePayload{
+						Body: "abc..........def",
+					},
+				},
+			},
+			want:    "",
+			wantErr: true,
+		},
+		{
+			name: "Bundle payload body has no signature content",
+			args: args{
+				bundle: &oci.Bundle{
+					Payload: oci.BundlePayload{
+						Body: "ewogICAgInNwZWMiOiB7CiAgICAgICJzaWduYXR1cmUiOiB7CiAgICAgIH0KICAgIH0KfQ==",
+					},
+				},
+			},
+			want:    "",
+			wantErr: true,
+		},
+		{
+			name: "Bundle payload body signature content is empty",
+			args: args{
+				bundle: &oci.Bundle{
+					Payload: oci.BundlePayload{
+						Body: "ewogICAgInNwZWMiOiB7CiAgICAgICAgInNpZ25hdHVyZSI6IHsKICAgICAgICAiY29udGVudCI6ICIiCiAgICAgICAgfQogICAgfQp9",
+					},
+				},
+			},
+			want:    "",
+			wantErr: true,
+		},
+		{
+			name: "Bundle payload body is not a valid JSON",
+			args: args{
+				bundle: &oci.Bundle{
+					Payload: oci.BundlePayload{
+						Body: "ewogICJzcGVjIjosLCB7CiAgICAic2lnbmF0dXJlIjogewogICAgICAiY29udGVudCI6ICJNRVVDSVFDeWVtOEdjcjBzUEZNUDdmVFhhekNONTdOY041K01qeEp3OU9vMHgyZU0rQUlnZGdCUDk2Qk8xVGUvTmRiakhiVWViMEJVeWU2ZGVSZ1Z0UUV2NU5vNXNtQT0iCiAgICB9CiAgfQp9",
+					},
+				},
+			},
+			want:    "",
+			wantErr: true,
+		},
+		{
+			name: "Bundle payload body signature content is correct",
+			args: args{
+				bundle: &oci.Bundle{
+					Payload: oci.BundlePayload{
+						Body: "ewogICJzcGVjIjogewogICAgInNpZ25hdHVyZSI6IHsKICAgICAgImNvbnRlbnQiOiAiTUVVQ0lRQ3llbThHY3Iwc1BGTVA3ZlRYYXpDTjU3TmNONStNanhKdzlPbzB4MmVNK0FJZ2RnQlA5NkJPMVRlL05kYmpIYlVlYjBCVXllNmRlUmdWdFFFdjVObzVzbUE9IgogICAgfQogIH0KfQ==",
+					},
+				},
+			},
+			want:    "MEUCIQCyem8Gcr0sPFMP7fTXazCN57NcN5+MjxJw9Oo0x2eM+AIgdgBP96BO1Te/NdbjHbUeb0BUye6deRgVtQEv5No5smA=",
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := getBundleSignatureContent(tt.args.bundle)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("getBundleSignatureContent() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("getBundleSignatureContent() = %v, want %v", got, tt.want)
 			}
 		})
 	}
