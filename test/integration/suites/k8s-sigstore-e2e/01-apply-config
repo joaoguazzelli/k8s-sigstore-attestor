@@ -32,9 +32,9 @@ wait-for-rollout spire daemonset/spire-agent
 # an entry for it
 ${KUBEBIN} apply -f ./conf/workload-signed.yaml
 wait-for-rollout spire deployment/example-workload-signed
-${KUBEBIN} apply -f ./conf/workload-unsigned.yaml
-wait-for-rollout spire deployment/example-workload-unsigned
 ${KUBEBIN} apply -f ./conf/workload-signed-wrong-subject.yaml
 wait-for-rollout spire deployment/example-workload-signed-wrong-subject
-${KUBEBIN} apply -f ./conf/workload-signed-extra.yaml
-wait-for-rollout spire deployment/example-workload-signed-extra
+${KUBEBIN} apply -f ./conf/workload-unsigned.yaml
+wait-for-rollout spire deployment/example-workload-unsigned
+${KUBEBIN} apply -f ./conf/workload-unsigned-skipped.yaml
+wait-for-rollout spire deployment/example-workload-unsigned-skipped
